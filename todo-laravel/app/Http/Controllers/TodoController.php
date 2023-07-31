@@ -46,4 +46,20 @@ class TodoController extends Controller
             ], 404);
         }
     }
+
+    public function delete($id)
+    {
+        if(Todos::where('id', $id)->exists()){
+            $todo = Todos::find($id);
+
+            $todo->delete();
+            return response()->json([
+                "message" => "Todo deleted."
+            ], 202);
+        } else{
+            return response()->json([
+                "message" => "Todo Not Found."
+            ], 404);
+        }
+    }
 }

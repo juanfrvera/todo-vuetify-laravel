@@ -43,25 +43,27 @@
 
 <script setup lang="ts">
 import { Ref, ref } from 'vue';
+import { ApiService, ITodo } from './service/api.service';
 
 const ui: Ref<{ newTodoString: string; list: ITodoUI[] }> = ref({ newTodoString: "", list: [] });
+const api = new ApiService();
 
-interface ITodoUI {
-  id: string;
-  name: string;
+interface ITodoUI extends ITodo {
   beingEdited?: boolean;
   editString?: string;
 }
 
 function createIconClicked() {
-  addNewTodo(ui.value.newTodoString);
+  createTodo(ui.value.newTodoString);
 }
 function newTodoEnterKeyUp() {
-  addNewTodo(ui.value.newTodoString);
+  createTodo(ui.value.newTodoString);
 }
-function addNewTodo(todoString: string) {
-  ui.value.list = [{ id: Date.now().toString(), name: todoString }, ...ui.value.list];
-  ui.value.newTodoString = "";
+function createTodo(todoString: string) {
+  api.createTodo({ name: todoString }).then(todo => {
+    ui.value.list = [todo, ...ui.value.list];
+    ui.value.newTodoString = "";
+  });
 }
 function editTodoClicked(todo: ITodoUI) {
   todo.editString = todo.name;

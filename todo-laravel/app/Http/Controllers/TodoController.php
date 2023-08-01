@@ -17,14 +17,12 @@ class TodoController extends Controller
     {
         $todo = new Todos;
         $todo->name = $request->name;
-        $todo->description = $request->description;
+        $todo->description = is_null($request->description) ? "" : $request->description;
         $todo->status = 'active';
 
         $todo->save();
 
-        return response()->json([
-            "message" => "Todo added."
-        ], 201);
+        return response()->json($todo, 201);
     }
 
     public function update(Request $request, $id)

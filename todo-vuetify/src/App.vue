@@ -4,7 +4,7 @@
       <div id="container">
         <div id="main">
           <v-text-field id="new-todo-input" v-model="ui.newTodoString" :readonly="ui.savingCreation"
-            :label="!ui.savingCreation ? 'New TODO' : 'Saving TODO...'" variant="outlined"
+            :label="!ui.savingCreation ? 'New to-do' : 'Saving to-do...'" variant="outlined"
             :append-inner-icon="!ui.savingCreation ? 'mdi-plus' : ''" @click:append-inner="createIconClicked"
             @keyup.enter="newTodoEnterKeyUp" loading>
             <template v-slot:loader>
@@ -38,7 +38,8 @@
                       <div class="list-item-actions">
                         <v-btn @click="editTodoClicked(todo)" size="small" class="ma-2" color="indigo"
                           icon="mdi-pencil"></v-btn>
-                        <v-btn size="small" class="ma-2" color="red-darken-4" icon="mdi-trash-can"></v-btn>
+                        <v-btn @click="deleteTodo(todo)" :loading="todo.deleting" size="small" class="ma-2"
+                          color="red-darken-4" icon="mdi-trash-can"></v-btn>
                       </div>
                     </template>
 
@@ -92,7 +93,7 @@ import { ApiService, ITodo } from './service/api.service';
 import { onMounted } from 'vue';
 
 const ui: Ref<{ newTodoString: string; list: ITodoUI[] | null; savingCreation?: boolean; }> = ref(
-  { newTodoString: "Buy Olive Oil", list: null, savingCreation: false }
+  { newTodoString: "", list: null, savingCreation: false }
 );
 const api = new ApiService();
 
@@ -135,7 +136,8 @@ function editTodoEnterKeyUp(todo: ITodoUI) {
   saveEditedTodo(todo);
 }
 function saveEditedTodo(todo: ITodoUI) {
-  if (todo.savingEdit) return;
+  if (todo.savingEdit || todo.deleting) return;
+
   const name = todo.editString ?? "";
   if (!validate(name)) return;
 
@@ -159,16 +161,29 @@ function endTodoEdition(todo: ITodoUI) {
 }
 
 function markAsDoneClicked(todo: ITodoUI) {
+  if (todo.updatingState || todo.deleting) return;
+
   todo.updatingState = true;
   api.updateTodo({ id: todo.id, status: 'done' }).then(() => {
     todo.status = 'done';
   }).finally(() => todo.updatingState = false);
 }
 function markAsActiveClicked(todo: ITodoUI) {
+  if (todo.updatingState || todo.deleting) return;
+
   todo.updatingState = true;
   api.updateTodo({ id: todo.id, status: 'active' }).then(() => {
     todo.status = 'active';
   }).finally(() => todo.updatingState = false);
+}
+
+function deleteTodo(todo: ITodoUI) {
+  if (todo.updatingState || todo.savingEdit || todo.deleting) return;
+
+  todo.deleting = true;
+  api.deleteTodo(todo.id).then(() => {
+    ui.value.list = ui.value.list!.filter(t => t.id !== todo.id);
+  }).finally(() => todo.deleting = false);
 }
 
 interface ITodoUI extends ITodo {
@@ -176,6 +191,7 @@ interface ITodoUI extends ITodo {
   beingEdited?: boolean;
   editString?: string;
   savingEdit?: boolean;
+  deleting?: boolean;
 }
 </script>
 

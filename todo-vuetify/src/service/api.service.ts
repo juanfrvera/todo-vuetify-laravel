@@ -35,6 +35,15 @@ export class ApiService {
 
         return response.json();
     }
+
+    public async deleteTodo(id: string) {
+        const response = await fetch(`${this.url}/${id}`, {
+            method: 'DELETE',
+            headers: this.headers,
+        });
+
+        return response.json();
+    }
 }
 
 export interface ITodo {

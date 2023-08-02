@@ -47,8 +47,8 @@
                       <v-text-field id="new-todo-input" v-model="todo.editString" variant="underlined"
                         @keyup.enter="editTodoEnterKeyUp(todo)" @keyup.escape="editTodoEscapeKeyUp(todo)"></v-text-field>
                       <div class="list-item-actions">
-                        <v-btn @click="saveEditIconClicked(todo)" size="small" class="ma-2" color="green"
-                          icon="mdi-content-save"></v-btn>
+                        <v-btn @click="saveEditIconClicked(todo)" :loading="todo.savingEdit" size="small" class="ma-2"
+                          color="green" icon="mdi-content-save"></v-btn>
                         <v-btn @click="cancelEditIconClicked(todo)" size="small" class="ma-2" color="red"
                           icon="mdi-close"></v-btn>
                       </div>
@@ -127,26 +127,35 @@ function editTodoClicked(todo: ITodoUI) {
   todo.editString = todo.name;
   todo.beingEdited = true;
 }
+
 function saveEditIconClicked(todo: ITodoUI) {
   saveEditedTodo(todo);
-}
-function cancelEditIconClicked(todo: ITodoUI) {
-  endTodoEdition(todo);
 }
 function editTodoEnterKeyUp(todo: ITodoUI) {
   saveEditedTodo(todo);
 }
 function saveEditedTodo(todo: ITodoUI) {
+  if (todo.savingEdit) return;
   const name = todo.editString ?? "";
   if (!validate(name)) return;
-  todo.name = name;
+
+  todo.savingEdit = true;
+  api.updateTodo({ id: todo.id, name })
+    .then(() => {
+      todo.name = name;
+      endTodoEdition(todo);
+    })
+    .finally(() => todo.savingEdit = false);
+}
+
+function cancelEditIconClicked(todo: ITodoUI) {
+  endTodoEdition(todo);
+}
+function editTodoEscapeKeyUp(todo: ITodoUI) {
   endTodoEdition(todo);
 }
 function endTodoEdition(todo: ITodoUI) {
   todo.beingEdited = false;
-}
-function editTodoEscapeKeyUp(todo: ITodoUI) {
-  endTodoEdition(todo);
 }
 
 function markAsDoneClicked(todo: ITodoUI) {
@@ -163,9 +172,10 @@ function markAsActiveClicked(todo: ITodoUI) {
 }
 
 interface ITodoUI extends ITodo {
+  updatingState?: boolean;
   beingEdited?: boolean;
   editString?: string;
-  updatingState?: boolean;
+  savingEdit?: boolean;
 }
 </script>
 

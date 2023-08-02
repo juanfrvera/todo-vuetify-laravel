@@ -17,16 +17,31 @@
               <v-list v-if="ui.list.length" lines="one">
                 <v-list-item v-for="todo in ui.list" :key="todo.id">
                   <div class="list-item-body">
-                    <v-btn variant="outlined" class="ma-2" color="green" icon="mdi-check-bold"></v-btn>
+
+                    <!-- Mark as done (is active) -->
+                    <v-btn v-if="todo.status === 'active'" :loading="todo.updatingState" @click="markAsDoneClicked(todo)"
+                      variant="outlined" class="ma-2" color="green" icon="mdi-check-bold"></v-btn>
+
+                    <!-- Mark as active (is done) -->
+                    <v-btn v-else :loading="todo.updatingState" @click="markAsActiveClicked(todo)" class="ma-2"
+                      color="green" icon="mdi-check-bold"></v-btn>
+
                     <!-- Readonly view -->
                     <template v-if="!todo.beingEdited">
-                      <div class="list-item-name">{{ todo.name }}</div>
+
+                      <!-- Active name -->
+                      <div v-if="todo.status === 'active'" class="list-item-name">{{ todo.name }}</div>
+
+                      <!-- Done name -->
+                      <div v-else="todo.status === 'active'" class="list-item-name done-item-name">{{ todo.name }}</div>
+
                       <div class="list-item-actions">
                         <v-btn @click="editTodoClicked(todo)" size="small" class="ma-2" color="indigo"
                           icon="mdi-pencil"></v-btn>
                         <v-btn size="small" class="ma-2" color="red-darken-4" icon="mdi-trash-can"></v-btn>
                       </div>
                     </template>
+
                     <!-- Editing view -->
                     <template v-else>
                       <v-text-field id="new-todo-input" v-model="todo.editString" variant="underlined"
@@ -134,9 +149,23 @@ function editTodoEscapeKeyUp(todo: ITodoUI) {
   endTodoEdition(todo);
 }
 
+function markAsDoneClicked(todo: ITodoUI) {
+  todo.updatingState = true;
+  api.updateTodo({ id: todo.id, status: 'done' }).then(() => {
+    todo.status = 'done';
+  }).finally(() => todo.updatingState = false);
+}
+function markAsActiveClicked(todo: ITodoUI) {
+  todo.updatingState = true;
+  api.updateTodo({ id: todo.id, status: 'active' }).then(() => {
+    todo.status = 'active';
+  }).finally(() => todo.updatingState = false);
+}
+
 interface ITodoUI extends ITodo {
   beingEdited?: boolean;
   editString?: string;
+  updatingState?: boolean;
 }
 </script>
 
@@ -172,5 +201,9 @@ interface ITodoUI extends ITodo {
 #empty-state {
   margin: 16px;
   font-size: 20px;
+}
+
+.done-item-name {
+  text-decoration: line-through;
 }
 </style>

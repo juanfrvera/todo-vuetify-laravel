@@ -20,9 +20,25 @@ export class ApiService {
 
         return response.json();
     }
+
+    /**
+     * Updates only given fields of todo
+     * @param todo Please include the id and only changed properties
+     * @returns updated todo
+     */
+    public async updateTodo(todo: { id: string } & Partial<ITodo>): Promise<ITodo> {
+        const response = await fetch(`${this.url}/${todo.id}`, {
+            method: 'PATCH',
+            headers: this.headers,
+            body: JSON.stringify(todo)
+        });
+
+        return response.json();
+    }
 }
 
 export interface ITodo {
     id: string;
     name: string;
+    status: 'active' | 'done';
 }

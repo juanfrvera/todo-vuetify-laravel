@@ -3,9 +3,15 @@
     <v-main>
       <div id="container">
         <div id="main">
-          <v-text-field id="new-todo-input" v-model="ui.newTodoString" label="New TODO" variant="outlined"
-            append-inner-icon="mdi-plus" @click:append-inner="createIconClicked"
-            @keyup.enter="newTodoEnterKeyUp"></v-text-field>
+          <v-text-field id="new-todo-input" v-model="ui.newTodoString" :readonly="ui.savingCreation"
+            :label="!ui.savingCreation ? 'New TODO' : 'Saving TODO...'" variant="outlined"
+            :append-inner-icon="!ui.savingCreation ? 'mdi-plus' : ''" @click:append-inner="createIconClicked"
+            @keyup.enter="newTodoEnterKeyUp" loading>
+            <template v-slot:loader>
+              <v-progress-linear :active="ui.savingCreation" color="indigo" absolute height="5"
+                indeterminate></v-progress-linear>
+            </template>
+          </v-text-field>
           <v-card id="todo-list" variant="outlined">
             <v-list lines="one">
               <v-list-item v-for="todo in ui.list" :key="todo.id">
@@ -45,7 +51,9 @@
 import { Ref, ref } from 'vue';
 import { ApiService, ITodo } from './service/api.service';
 
-const ui: Ref<{ newTodoString: string; list: ITodoUI[] }> = ref({ newTodoString: "", list: [] });
+const ui: Ref<{ newTodoString: string; list: ITodoUI[]; savingCreation?: boolean; }> = ref(
+  { newTodoString: "Buy Olive Oil", list: [], savingCreation: false }
+);
 const api = new ApiService();
 
 interface ITodoUI extends ITodo {
@@ -60,10 +68,18 @@ function newTodoEnterKeyUp() {
   createTodo(ui.value.newTodoString);
 }
 function createTodo(todoString: string) {
+  if (ui.value.savingCreation) return;
+  if (!validate(todoString)) return;
+
+  ui.value.savingCreation = true;
   api.createTodo({ name: todoString }).then(todo => {
     ui.value.list = [todo, ...ui.value.list];
     ui.value.newTodoString = "";
-  });
+  }).finally(() => ui.value.savingCreation = false);
+}
+function validate(name: string) {
+  if (!name) return false;
+  return true;
 }
 function editTodoClicked(todo: ITodoUI) {
   todo.editString = todo.name;
@@ -79,7 +95,9 @@ function editTodoEnterKeyUp(todo: ITodoUI) {
   saveEditedTodo(todo);
 }
 function saveEditedTodo(todo: ITodoUI) {
-  todo.name = todo.editString ?? "";
+  const name = todo.editString ?? "";
+  if (!validate(name)) return;
+  todo.name = name;
   endTodoEdition(todo);
 }
 function endTodoEdition(todo: ITodoUI) {

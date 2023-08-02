@@ -9,7 +9,7 @@ class TodoController extends Controller
 {
     public function getAll()
     {
-        $todos = Todos::all();
+        $todos = Todos::all()->sortByDesc('created_at')->values()->all();
         return response()->json($todos);
     }
 

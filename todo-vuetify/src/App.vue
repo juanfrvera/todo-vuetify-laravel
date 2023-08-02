@@ -13,33 +13,57 @@
             </template>
           </v-text-field>
           <v-card id="todo-list" variant="outlined">
-            <v-list lines="one">
-              <v-list-item v-for="todo in ui.list" :key="todo.id">
-                <div class="list-item-body">
-                  <v-btn variant="outlined" class="ma-2" color="green" icon="mdi-check-bold"></v-btn>
-                  <!-- Readonly view -->
-                  <template v-if="!todo.beingEdited">
-                    <div class="list-item-name">{{ todo.name }}</div>
-                    <div class="list-item-actions">
-                      <v-btn @click="editTodoClicked(todo)" size="small" class="ma-2" color="indigo"
-                        icon="mdi-pencil"></v-btn>
-                      <v-btn size="small" class="ma-2" color="red-darken-4" icon="mdi-trash-can"></v-btn>
-                    </div>
-                  </template>
-                  <!-- Editing view -->
-                  <template v-else>
-                    <v-text-field id="new-todo-input" v-model="todo.editString" variant="underlined"
-                      @keyup.enter="editTodoEnterKeyUp(todo)" @keyup.escape="editTodoEscapeKeyUp(todo)"></v-text-field>
-                    <div class="list-item-actions">
-                      <v-btn @click="saveEditIconClicked(todo)" size="small" class="ma-2" color="green"
-                        icon="mdi-content-save"></v-btn>
-                      <v-btn @click="cancelEditIconClicked(todo)" size="small" class="ma-2" color="red"
-                        icon="mdi-close"></v-btn>
-                    </div>
-                  </template>
-                </div>
-              </v-list-item>
-            </v-list>
+            <template v-if="ui.list">
+              <v-list v-if="ui.list.length" lines="one">
+                <v-list-item v-for="todo in ui.list" :key="todo.id">
+                  <div class="list-item-body">
+                    <v-btn variant="outlined" class="ma-2" color="green" icon="mdi-check-bold"></v-btn>
+                    <!-- Readonly view -->
+                    <template v-if="!todo.beingEdited">
+                      <div class="list-item-name">{{ todo.name }}</div>
+                      <div class="list-item-actions">
+                        <v-btn @click="editTodoClicked(todo)" size="small" class="ma-2" color="indigo"
+                          icon="mdi-pencil"></v-btn>
+                        <v-btn size="small" class="ma-2" color="red-darken-4" icon="mdi-trash-can"></v-btn>
+                      </div>
+                    </template>
+                    <!-- Editing view -->
+                    <template v-else>
+                      <v-text-field id="new-todo-input" v-model="todo.editString" variant="underlined"
+                        @keyup.enter="editTodoEnterKeyUp(todo)" @keyup.escape="editTodoEscapeKeyUp(todo)"></v-text-field>
+                      <div class="list-item-actions">
+                        <v-btn @click="saveEditIconClicked(todo)" size="small" class="ma-2" color="green"
+                          icon="mdi-content-save"></v-btn>
+                        <v-btn @click="cancelEditIconClicked(todo)" size="small" class="ma-2" color="red"
+                          icon="mdi-close"></v-btn>
+                      </div>
+                    </template>
+                  </div>
+                </v-list-item>
+              </v-list>
+
+              <!-- Empty List -->
+              <template v-else>
+                <div id="empty-state">You don't have any To-dos yet, you can create one by writting the name and then
+                  clicking the + icon
+                  or
+                  pressing the Enter key.</div>
+              </template>
+            </template>
+
+            <!-- Loading list -->
+            <template v-else>
+              <v-container style="height: 400px;">
+                <v-row class="fill-height" align-content="center" justify="center">
+                  <v-col class="text-subtitle-1 text-center" cols="12">
+                    Loading To-dos
+                  </v-col>
+                  <v-col cols="6">
+                    <v-progress-linear color="indigo" indeterminate rounded height="6"></v-progress-linear>
+                  </v-col>
+                </v-row>
+              </v-container>
+            </template>
           </v-card>
         </div>
       </div>
@@ -50,16 +74,18 @@
 <script setup lang="ts">
 import { Ref, ref } from 'vue';
 import { ApiService, ITodo } from './service/api.service';
+import { onMounted } from 'vue';
 
-const ui: Ref<{ newTodoString: string; list: ITodoUI[]; savingCreation?: boolean; }> = ref(
-  { newTodoString: "Buy Olive Oil", list: [], savingCreation: false }
+const ui: Ref<{ newTodoString: string; list: ITodoUI[] | null; savingCreation?: boolean; }> = ref(
+  { newTodoString: "Buy Olive Oil", list: null, savingCreation: false }
 );
 const api = new ApiService();
 
-interface ITodoUI extends ITodo {
-  beingEdited?: boolean;
-  editString?: string;
-}
+onMounted(() => {
+  api.getAllTodos().then(todos => {
+    ui.value.list = todos;
+  });
+})
 
 function createIconClicked() {
   createTodo(ui.value.newTodoString);
@@ -73,7 +99,8 @@ function createTodo(todoString: string) {
 
   ui.value.savingCreation = true;
   api.createTodo({ name: todoString }).then(todo => {
-    ui.value.list = [todo, ...ui.value.list];
+    const list = ui.value.list ?? [];
+    ui.value.list = [todo, ...list];
     ui.value.newTodoString = "";
   }).finally(() => ui.value.savingCreation = false);
 }
@@ -106,6 +133,11 @@ function endTodoEdition(todo: ITodoUI) {
 function editTodoEscapeKeyUp(todo: ITodoUI) {
   endTodoEdition(todo);
 }
+
+interface ITodoUI extends ITodo {
+  beingEdited?: boolean;
+  editString?: string;
+}
 </script>
 
 <style>
@@ -135,5 +167,10 @@ function editTodoEscapeKeyUp(todo: ITodoUI) {
 
 .list-item-name {
   flex-grow: 1;
+}
+
+#empty-state {
+  margin: 16px;
+  font-size: 20px;
 }
 </style>

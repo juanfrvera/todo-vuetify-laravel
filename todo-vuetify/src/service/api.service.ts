@@ -1,6 +1,10 @@
+import router from "@/router";
+
 export class ApiService {
     private readonly url: string = import.meta.env.VITE_API_URL;
-    private readonly headers = { 'Content-Type': 'application/json' };
+    private readonly headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+
+    constructor() { }
 
     public async createTodo(todo: { name: string }): Promise<ITodo> {
         const response = await fetch(this.url, {
@@ -17,6 +21,11 @@ export class ApiService {
             method: 'GET',
             headers: this.headers,
         });
+
+        if (response.status === 401) {
+            console.log("redirect to login");
+            router.push('/login');
+        }
 
         return response.json();
     }

@@ -16,7 +16,7 @@ use App\Http\Controllers\Api\AuthController;
 |
 */
 
-Route::get('/todos', [TodoController::class, 'getAll']);
+Route::get('/todos', [TodoController::class, 'index']);
 Route::post('/todos', [TodoController::class, 'store']);
 Route::patch('/todos/{id}', [TodoController::class, 'update']);
 Route::delete('/todos/{id}', [TodoController::class, 'delete']);

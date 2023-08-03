@@ -1,3 +1,5 @@
+# The Laravel project uses Sanctum to protect the routes
+
 # The laravel backend was made with php 8.1 and composer, you will need those installed in order to run the application.
 # You need to have XML, Curl, php-mbstring extensions enabled in php
 To run the laravel server you need to run the following commands:

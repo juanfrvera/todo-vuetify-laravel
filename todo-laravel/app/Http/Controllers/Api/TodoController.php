@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 
 class TodoController extends Controller
 {
-    public function getAll()
+    public function index()
     {
         $todos = Todos::all()->sortByDesc('created_at')->values()->all();
         return response()->json($todos);

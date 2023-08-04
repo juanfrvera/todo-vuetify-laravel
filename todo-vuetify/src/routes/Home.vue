@@ -95,16 +95,16 @@
   
 <script setup lang="ts">
 import { Ref, ref } from 'vue';
-import { ApiService, ITodo } from '../service/api.service';
+import { TodoService, ITodo } from '../service/todo.service';
 import { onMounted } from 'vue';
 
 const ui: Ref<{ newTodoString: string; list: ITodoUI[] | null; savingCreation?: boolean; }> = ref(
     { newTodoString: "", list: null, savingCreation: false }
 );
-const api = new ApiService();
+const todoService = new TodoService();
 
 onMounted(() => {
-    api.getAllTodos().then(todos => {
+    todoService.getAllTodos().then(todos => {
         ui.value.list = todos;
     });
 })
@@ -120,7 +120,7 @@ function createTodo(todoString: string) {
     if (!validate(todoString)) return;
 
     ui.value.savingCreation = true;
-    api.createTodo({ name: todoString }).then(todo => {
+    todoService.createTodo({ name: todoString }).then(todo => {
         const list = ui.value.list ?? [];
         ui.value.list = [todo, ...list];
         ui.value.newTodoString = "";
@@ -148,7 +148,7 @@ function saveEditedTodo(todo: ITodoUI) {
     if (!validate(name)) return;
 
     todo.savingEdit = true;
-    api.updateTodo({ id: todo.id, name })
+    todoService.updateTodo({ id: todo.id, name })
         .then(() => {
             todo.name = name;
             endTodoEdition(todo);
@@ -170,7 +170,7 @@ function markAsDoneClicked(todo: ITodoUI) {
     if (todo.updatingState || todo.deleting) return;
 
     todo.updatingState = true;
-    api.updateTodo({ id: todo.id, status: 'done' }).then(() => {
+    todoService.updateTodo({ id: todo.id, status: 'done' }).then(() => {
         todo.status = 'done';
     }).finally(() => todo.updatingState = false);
 }
@@ -178,7 +178,7 @@ function markAsActiveClicked(todo: ITodoUI) {
     if (todo.updatingState || todo.deleting) return;
 
     todo.updatingState = true;
-    api.updateTodo({ id: todo.id, status: 'active' }).then(() => {
+    todoService.updateTodo({ id: todo.id, status: 'active' }).then(() => {
         todo.status = 'active';
     }).finally(() => todo.updatingState = false);
 }
@@ -187,7 +187,7 @@ function deleteTodo(todo: ITodoUI) {
     if (todo.updatingState || todo.savingEdit || todo.deleting) return;
 
     todo.deleting = true;
-    api.deleteTodo(todo.id).then(() => {
+    todoService.deleteTodo(todo.id).then(() => {
         ui.value.list = ui.value.list!.filter(t => t.id !== todo.id);
     }).finally(() => todo.deleting = false);
 }

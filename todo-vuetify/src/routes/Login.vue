@@ -24,9 +24,10 @@
             <template v-else>
                 <h2>Let's create an account</h2>
                 <v-form class="credentials-form">
-                    <v-text-field label="Your name" variant="outlined"></v-text-field>
-                    <v-text-field label="Email" variant="outlined"></v-text-field>
-                    <v-text-field label="Password" variant="outlined" type="password"></v-text-field>
+                    <v-text-field v-model="ui.registering.name" label="Your name" variant="outlined"></v-text-field>
+                    <v-text-field v-model="ui.registering.email" label="Email" variant="outlined"></v-text-field>
+                    <v-text-field v-model="ui.registering.password" label="Password" variant="outlined"
+                        type="password"></v-text-field>
                     <v-btn color="success" block @click="registerButtonClicked" size="x-large">
                         Register
                     </v-btn>
@@ -42,22 +43,42 @@
     </v-app>
 </template>
 <script setup lang="ts">
+import router from '@/router';
+import { AuthService } from '@/service/auth.service';
+import { onMounted } from 'vue';
 import { Ref, ref } from 'vue';
 
-const ui: Ref<{ registering?: boolean; }> = ref({ registering: true });
+const authService = new AuthService();
+
+const ui: Ref<{ registering?: { name?: string; email?: string; password?: string; processing?: boolean; }; }> = ref({});
+
+onMounted(() => {
+    authService.getCsrfToken().then(console.log);
+})
 
 function loginButtonClicked() {
 
 }
 function registerClickedFromLoginHint() {
-    ui.value.registering = true;
+    ui.value.registering = {};
 }
 
 function registerButtonClicked() {
+    register();
+}
 
+function register() {
+    const data = ui.value.registering;
+    if (!data || data.processing || !data.name || !data.email || !data.password) return;
+
+    data.processing = true;
+    authService.register({ name: data.name, email: data.email, password: data.password }).then(() => {
+        // Go to home
+        router.push('/');
+    }).finally(() => data.processing = false);
 }
 function loginClickedFromRegisterHint() {
-    ui.value.registering = false;
+    ui.value.registering = undefined;
 }
 </script>
 

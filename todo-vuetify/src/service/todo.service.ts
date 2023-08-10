@@ -1,39 +1,48 @@
 import router from "@/router";
-import axios from "axios";
+import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios";
 
 export class TodoService {
     private readonly url: string = `${import.meta.env.VITE_API_URL}/todos`;
-    private readonly headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
+    private readonly config: AxiosRequestConfig = { withCredentials: true, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' } };
 
-    public async createTodo(todo: { name: string }): Promise<ITodo> {
-        const response = await axios.post(this.url, todo, { headers: this.headers, withCredentials: true });
-        return response.data;
+
+    public createTodo(todo: { name: string }): Promise<ITodo> {
+        return this.callAndCatchErrors(() => axios.post(this.url, todo, this.config));
     }
 
-    public async getAllTodos(): Promise<Array<ITodo>> {
-        const response = await axios.get(this.url, { headers: this.headers, withCredentials: true });
-
-        if (response.status === 401) {
-            console.log("redirect to login");
-            router.push('/login');
-        }
-
-        return response.data;
+    public getAllTodos(): Promise<Array<ITodo>> {
+        return this.callAndCatchErrors(() => axios.get(this.url, this.config));
     }
 
     /**
      * Updates only given fields of todo
-     * @param todo Please include the id and only changed properties
+     * @param todo Please include id and only changed properties
      * @returns updated todo
      */
-    public async updateTodo(todo: { id: string } & Partial<ITodo>): Promise<ITodo> {
-        const response = await axios.patch(`${this.url}/${todo.id}`, todo, { headers: this.headers, withCredentials: true });
-        return response.data;
+    public updateTodo(todo: { id: string } & Partial<ITodo>): Promise<ITodo> {
+        return this.callAndCatchErrors(() => axios.patch(`${this.url}/${todo.id}`, todo, this.config));
     }
 
-    public async deleteTodo(id: string) {
-        const response = await axios.delete(`${this.url}/${id}`, { headers: this.headers, withCredentials: true });
-        return response.data;
+    public deleteTodo(id: string) {
+        return this.callAndCatchErrors(() => axios.delete(`${this.url}/${id}`, this.config));
+    }
+
+    private async callAndCatchErrors(request: () => Promise<AxiosResponse>) {
+        try {
+            const response = await request();
+            return response.data;
+        } catch (error) {
+            this.redirectIfNoAuth(error);
+            throw error;
+        }
+    }
+
+    private redirectIfNoAuth(error: unknown) {
+        if (error instanceof AxiosError) {
+            if (error.response && error.response.status === 401) {
+                router.push('/login');
+            }
+        }
     }
 }
 

@@ -3,12 +3,14 @@
         <v-main id="main">
 
             <!-- Login -->
-            <template v-if="!ui.registering">
+            <template v-if="ui.loggingIn">
                 <h2>Welcome, please log in to use to-dos</h2>
                 <v-form class="credentials-form">
-                    <v-text-field label="Email" variant="outlined"></v-text-field>
-                    <v-text-field label="Password" variant="outlined" type="password"></v-text-field>
-                    <v-btn color="indigo" block @click="loginButtonClicked" size="x-large">
+                    <v-text-field v-model="ui.loggingIn.email" label="Email" variant="outlined"></v-text-field>
+                    <v-text-field v-model="ui.loggingIn.password" label="Password" variant="outlined"
+                        type="password"></v-text-field>
+                    <v-btn @click="loginButtonClicked" :loading="ui.loggingIn.processing" color="indigo" block
+                        size="x-large">
                         Log In
                     </v-btn>
                     <div class="alternative-hint">
@@ -21,14 +23,15 @@
             </template>
 
             <!-- Register -->
-            <template v-else>
+            <template v-if="ui.registering">
                 <h2>Let's create an account</h2>
                 <v-form class="credentials-form">
                     <v-text-field v-model="ui.registering.name" label="Your name" variant="outlined"></v-text-field>
                     <v-text-field v-model="ui.registering.email" label="Email" variant="outlined"></v-text-field>
                     <v-text-field v-model="ui.registering.password" label="Password" variant="outlined"
                         type="password"></v-text-field>
-                    <v-btn color="success" block @click="registerButtonClicked" size="x-large">
+                    <v-btn @click="registerButtonClicked" :loading="ui.registering.processing" color="success" block
+                        size="x-large">
                         Register
                     </v-btn>
                     <div class="alternative-hint">
@@ -50,14 +53,28 @@ import { Ref, ref } from 'vue';
 
 const authService = new AuthService();
 
-const ui: Ref<{ registering?: { name?: string; email?: string; password?: string; processing?: boolean; }; }> = ref({});
+const ui: Ref<{
+    registering?: { name?: string; email?: string; password?: string; processing?: boolean; };
+    loggingIn?: { email?: string; password?: string; processing?: boolean; };
+}> = ref({});
 
 onMounted(() => {
-    authService.getCsrfToken().then(console.log);
+    authService.loadCsrfToken();
+    ui.value.loggingIn = {};
 })
 
 function loginButtonClicked() {
+    logIn();
+}
+function logIn() {
+    const data = ui.value.loggingIn;
+    if (!data || !data.email || !data.password || data.processing) return;
 
+    data.processing = true;
+    authService.logIn({ email: data.email, password: data.password }).then(() => {
+        // Go to home
+        router.push('/');
+    }).finally(() => data.processing = false);
 }
 function registerClickedFromLoginHint() {
     ui.value.registering = {};
@@ -79,6 +96,7 @@ function register() {
 }
 function loginClickedFromRegisterHint() {
     ui.value.registering = undefined;
+    ui.value.loggingIn = {};
 }
 </script>
 

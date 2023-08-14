@@ -14,8 +14,6 @@ To run the laravel server you need to run the following commands:
 # 4 Run the server
 `php artisan serve`
 
-# This Laravel api uses a postgres database so you will need a postgres driver in order to access and run commands on it,
-# I recommend installing it with: sudo apt-get install php8.1-pgsql
 # You can change the version of php if you use another different than 8.1
 
 # To test the laravel backend:

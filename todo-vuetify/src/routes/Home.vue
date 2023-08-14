@@ -1,5 +1,9 @@
 <template>
     <v-app>
+        <header v-if="ui.user" id="header">
+            <div id="welcome">Welcome {{ ui.user.name }}</div>
+            <v-btn variant="text" id="logout">Log Out</v-btn>
+        </header>
         <v-main>
             <div id="container">
                 <div id="main">
@@ -97,8 +101,9 @@
 import { Ref, ref } from 'vue';
 import { TodoService, ITodo } from '../service/todo.service';
 import { onMounted } from 'vue';
+import { AuthService } from '@/service/auth.service';
 
-const ui: Ref<{ newTodoString: string; list: ITodoUI[] | null; savingCreation?: boolean; }> = ref(
+const ui: Ref<{ user?: { name: string; }; newTodoString: string; list: ITodoUI[] | null; savingCreation?: boolean; }> = ref(
     { newTodoString: "", list: null, savingCreation: false }
 );
 const todoService = new TodoService();
@@ -107,6 +112,7 @@ onMounted(() => {
     todoService.getAllTodos().then(todos => {
         ui.value.list = todos;
     });
+    ui.value.user = AuthService.getUserData();
 })
 
 function createIconClicked() {
@@ -202,6 +208,19 @@ interface ITodoUI extends ITodo {
 </script>
   
 <style>
+#header {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    gap: 24px;
+    margin: 16px;
+}
+
+#logout {
+    color: brown;
+    text-decoration: underline;
+}
+
 #container {
     max-height: 100vh;
     display: flex;

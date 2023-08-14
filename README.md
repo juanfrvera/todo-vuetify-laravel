@@ -18,6 +18,12 @@ To run the laravel server you need to run the following commands:
 # I recommend installing it with: sudo apt-get install php8.1-pgsql
 # You can change the version of php if you use another different than 8.1
 
+# To test the laravel backend:
+# 1. Go to the server's root folder:
+`cd ./todo-laravel`
+# 2. Run laravel command for testing:
+`php artisan test`
+
 
 # To run the frontend you need to use Node 18, and then run the following commands
 # 1. Go to the frontend's root folder:

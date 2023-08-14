@@ -23,9 +23,11 @@ Route::delete('/todos/{id}', [TodoController::class, 'delete']);
 
 Route::post('/auth/register', [AuthController::class, 'registerUser']);
 Route::post('/auth/login', [AuthController::class, 'loginUser']);
+Route::post('/auth/logout', [AuthController::class, 'logOutUser']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::resource('todos', TodoController::class);
     Route::patch('todos/{id}', [TodoController::class, 'update']);
     Route::delete('todos/{id}', [TodoController::class, 'delete']);
+    Route::post('/auth/logout', [AuthController::class, 'logOutUser']);
 });

@@ -1,8 +1,8 @@
 <template>
     <v-app>
-        <header v-if="ui.user" id="header">
-            <div id="welcome">Welcome {{ ui.user.name }}</div>
-            <v-btn variant="text" id="logout">Log Out</v-btn>
+        <header id="header">
+            <div v-if="ui.user" id="welcome">Welcome {{ ui.user.name }}</div>
+            <v-btn @click="logOut" variant="text" id="logout">Log Out</v-btn>
         </header>
         <v-main>
             <div id="container">
@@ -102,6 +102,7 @@ import { Ref, ref } from 'vue';
 import { TodoService, ITodo } from '../service/todo.service';
 import { onMounted } from 'vue';
 import { AuthService } from '@/service/auth.service';
+import router from '@/router';
 
 const ui: Ref<{ user?: { name: string; }; newTodoString: string; list: ITodoUI[] | null; savingCreation?: boolean; }> = ref(
     { newTodoString: "", list: null, savingCreation: false }
@@ -196,6 +197,10 @@ function deleteTodo(todo: ITodoUI) {
     todoService.deleteTodo(todo.id).then(() => {
         ui.value.list = ui.value.list!.filter(t => t.id !== todo.id);
     }).finally(() => todo.deleting = false);
+}
+
+function logOut() {
+    AuthService.logOut().then(() => router.push('/'));
 }
 
 interface ITodoUI extends ITodo {

@@ -31,4 +31,8 @@ export class AuthService {
     public static getUserData() {
         return this.userData;
     }
+
+    public static async logOut() {
+        await axios.post(`${this.url}/logout`, {}, this.config);
+    }
 }
